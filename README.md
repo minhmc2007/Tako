@@ -4,7 +4,7 @@
 # 🐙 Tako Language
 
 **Tako** is a small, flexible interpreted scripting language made for tiny operating systems, embedded devices, or just having fun.  
-Created by [@minhmc2007](https://github.com/minhmc2007), Tako is designed to be minimal, hackable, and educational — written entirely in C with no dependencies.
+Created by [@minhmc2007](https://github.com/minhmc2007), Tako is designed to be minimal, hackable, and educational — written entirely in C with no dependencies (expect compiler).
 
 ---
 
