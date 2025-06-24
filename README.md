@@ -75,7 +75,9 @@ chmod +x output_binary
 Extension	Description
 
 .tako	Tako language source code
+
 .asm	(Optional) assembly output
+
 .o	ELF 64-bit LSB relocatable, x86-64, version 1 (SYSV), not stripped 
 
 
