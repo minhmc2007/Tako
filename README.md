@@ -1,4 +1,4 @@
-![tako-logo](logo.pg)
+![tako-logo](logo.png)
 
 
 # 🐙 Tako Language
