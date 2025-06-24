@@ -6,8 +6,6 @@
 **Tako** is a small, flexible interpreted scripting language made for tiny operating systems, embedded devices, or just having fun.  
 Created by [@minhmc2007](https://github.com/minhmc2007), Tako is designed to be minimal, hackable, and educational — written entirely in C with no dependencies (expect compiler).
 
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/minhmc2007/Tako?utm_source=oss&utm_medium=github&utm_campaign=minhmc2007%2FTako&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
-
 ---
 
 ## ✨ Features
