@@ -121,7 +121,7 @@ void emit_epilogue(CompilerState *state) { fprintf(state->outfile, "\n    mov ra
 // --- Main Compiler Driver ---
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        fprintf(stderr, "Usage: %s <source_file.tiny> <output_executable_name>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <source_file.tako> <output_executable_name>\n", argv[0]);
         return 1;
     }
     const char *source_filename = argv[1];
