@@ -1,0 +1,9 @@
+set x = 1999
+
+if x < 2000
+	print "X is less than 2000"
+end
+if x > 2000
+	print "X is higher than 2000"
+
+end

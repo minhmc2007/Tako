@@ -1,0 +1,9 @@
+set x = 1
+
+loop 15
+
+print "Loop" x
+
+add x 1
+
+end
