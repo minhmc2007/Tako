@@ -105,7 +105,6 @@ jobs:
         draft: false
         prerelease: true
 
-    # --- THIS STEP IS THE FIX ---
     - name: Upload all release assets
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -126,5 +125,6 @@ jobs:
           fi
           
           echo "Uploading '$file_path' as asset '$asset_name'..."
-          gh release upload ${{ github.ref_name }} "$file_path" --name "$asset_name" --clobber
+          # CORRECTED SYNTAX: Use a '#' to specify the asset name.
+          gh release upload ${{ github.ref_name }} "${file_path}#${asset_name}" --clobber
         done
