@@ -53,7 +53,7 @@ jobs:
       uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
-        install: mingw-w64-x86_64-gcc make
+        install: mingw-w64-x86_64-gcc make # Installs 'gcc' and 'make'
 
     # --- Build Steps ---
     - name: Build on Linux/macOS
@@ -71,8 +71,9 @@ jobs:
       if: runner.os == 'Windows'
       shell: msys2 {0}
       run: |
-        mingw32-make clean
-        mingw32-make
+        # CORRECTED: Use 'make', not 'mingw32-make'
+        make clean
+        make
 
     # --- Test Steps (for native builds only) ---
     - name: Test executable on Linux/macOS (native builds)
@@ -104,7 +105,7 @@ jobs:
     # This job runs only if all build jobs succeed
     needs: build
     runs-on: ubuntu-latest
-    # Run this job only when a tag is pushed, not on manual dispatch of the workflow
+    # CRITICAL: Run this job only when a tag is pushed
     if: startsWith(github.ref, 'refs/tags/')
     steps:
     - name: Download all build artifacts
@@ -128,6 +129,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GH_REPO: ${{ github.repository }}
       run: |
-        # Use the GitHub CLI to upload all binaries from the downloaded artifact directories
+        # Use the GitHub CLI to upload all binaries from the downloaded artifact directories.
+        # This is robust and automatically handles any changes to the build matrix.
         # The glob pattern finds all files inside the artifact subdirectories (e.g., artifacts/tako-linux-x86_64/tako)
-        gh release upload ${{ github.ref_name }} artifacts/**/*
+        gh release upload ${{ github.ref_name }} artifacts/**/* --clobber
