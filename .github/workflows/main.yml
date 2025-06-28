@@ -110,8 +110,25 @@ jobs:
     - name: Test executable (Linux)
       if: startsWith(matrix.target, 'linux-') && matrix.arch == 'x86_64'
       run: |
-        echo "Testing tako executable..."
-        ./tako || echo "Expected: tako needs arguments"
+        echo "Testing tako with example file..."
+        ./tako exam/hello.tako || echo "Test completed (exit code expected)"
+
+    - name: Test executable (Windows x86_64)
+      if: matrix.target == 'windows-x86_64'
+      shell: msys2 {0}
+      run: |
+        echo "Testing tako.exe with example file..."
+        ./tako.exe exam/hello.tako || echo "Test completed (exit code expected)"
+
+    - name: Test executable (macOS)
+      if: startsWith(matrix.target, 'macos-')
+      run: |
+        echo "Testing tako with example file..."
+        ./tako exam/hello.tako || echo "Test completed (exit code expected)"
+
+    - name: Test executable (Linux)
+      if: startsWith(matrix.target, 'linux-') && matrix.arch == 'x86_64'
+      run: |
         echo "Testing tako with example file..."
         ./tako exam/hello.tako
 
@@ -119,16 +136,12 @@ jobs:
       if: matrix.target == 'windows-x86_64'
       shell: msys2 {0}
       run: |
-        echo "Testing tako.exe executable..."
-        ./tako.exe || echo "Expected: tako needs arguments"
         echo "Testing tako.exe with example file..."
         ./tako.exe exam/hello.tako
 
     - name: Test executable (macOS)
       if: startsWith(matrix.target, 'macos-')
       run: |
-        echo "Testing tako executable..."
-        ./tako || echo "Expected: tako needs arguments"
         echo "Testing tako with example file..."
         ./tako exam/hello.tako
 
