@@ -111,7 +111,7 @@ jobs:
       if: startsWith(matrix.target, 'linux-') && matrix.arch == 'x86_64'
       run: |
         echo "Testing tako with example file..."
-        ./tako exam/hello.tako || echo "Test completed (exit code expected)"
+        ./tako examples/hello.tako || echo "Test completed (exit code expected)"
 
     - name: Test executable (Windows x86_64)
       if: matrix.target == 'windows-x86_64'
