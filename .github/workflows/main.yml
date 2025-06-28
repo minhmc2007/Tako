@@ -111,7 +111,7 @@ jobs:
       if: startsWith(matrix.target, 'linux-') && matrix.arch == 'x86_64'
       run: |
         echo "Testing tako executable..."
-        ./tako
+        ./tako || echo "Expected: tako needs arguments"
         echo "Testing tako with example file..."
         ./tako exam/hello.tako
 
@@ -120,7 +120,7 @@ jobs:
       shell: msys2 {0}
       run: |
         echo "Testing tako.exe executable..."
-        ./tako.exe
+        ./tako.exe || echo "Expected: tako needs arguments"
         echo "Testing tako.exe with example file..."
         ./tako.exe exam/hello.tako
 
@@ -128,7 +128,7 @@ jobs:
       if: startsWith(matrix.target, 'macos-')
       run: |
         echo "Testing tako executable..."
-        ./tako
+        ./tako || echo "Expected: tako needs arguments"
         echo "Testing tako with example file..."
         ./tako exam/hello.tako
 
