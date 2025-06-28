@@ -1,0 +1,5 @@
+set age = 10
+
+sub age 15
+
+print "Age : " age
