@@ -13,27 +13,22 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false  # Continue other matrix jobs even if one fails
+      fail-fast: false
       matrix:
         include:
-          # Linux builds
           - os: ubuntu-latest
             target: linux-x86_64
             output: tako
           - os: ubuntu-latest
             target: linux-arm64
             output: tako
-
-          # Windows builds
           - os: windows-latest
             target: windows-x86_64
             output: tako.exe
-
-          # macOS builds
-          - os: macos-13  # Intel runner
+          - os: macos-13
             target: macos-x86_64
             output: tako
-          - os: macos-latest  # ARM64 runner (currently macos-14)
+          - os: macos-latest
             target: macos-arm64
             output: tako
 
@@ -41,7 +36,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # --- Setup Steps ---
     - name: Setup cross-compilation for Linux ARM64
       if: matrix.target == 'linux-arm64'
       run: |
@@ -53,14 +47,12 @@ jobs:
       uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
-        install: mingw-w64-x86_64-gcc make # Installs 'gcc' and 'make'
+        install: mingw-w64-x86_64-gcc make
 
-    # --- Build Steps ---
     - name: Build on Linux/macOS
       if: runner.os == 'Linux' || runner.os == 'macOS'
       run: |
         make clean
-        # For cross-compilation, specify the C compiler
         if [[ "${{ matrix.target }}" == "linux-arm64" ]]; then
           CC=aarch64-linux-gnu-gcc make
         else
@@ -71,47 +63,36 @@ jobs:
       if: runner.os == 'Windows'
       shell: msys2 {0}
       run: |
-        # CORRECTED: Use 'make', not 'mingw32-make'
         make clean
         make
 
-    # --- Test Steps (for native builds only) ---
     - name: Test executable on Linux/macOS (native builds)
-      # We can only run tests on native builds, not cross-compiled ones
       if: (runner.os == 'Linux' && matrix.target == 'linux-x86_64') || runner.os == 'macOS'
       run: |
-        echo "Testing ${{ matrix.output }} with example file..."
-        # This command suppresses errors. If a non-zero exit code is expected,
-        # consider a more specific check like:
-        # if ! ./${{ matrix.output }} examples/hello.tako; then echo "Test passed as expected"; else exit 1; fi
         ./${{ matrix.output }} examples/hello.tako || echo "Test completed (non-zero exit code ignored)"
 
     - name: Test executable on Windows
       if: runner.os == 'Windows'
       shell: msys2 {0}
       run: |
-        echo "Testing ${{ matrix.output }} with example file..."
         ./${{ matrix.output }} examples/hello.tako || echo "Test completed (non-zero exit code ignored)"
 
-    # --- Artifact Upload ---
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: tako-${{ matrix.target }} # e.g., tako-linux-x86_64
+        name: tako-${{ matrix.target }}
         path: ${{ matrix.output }}
-        retention-days: 1 # Keep artifacts for 1 day
+        retention-days: 1
 
   release:
-    # This job runs only if all build jobs succeed
     needs: build
     runs-on: ubuntu-latest
-    # CRITICAL: Run this job only when a tag is pushed
     if: startsWith(github.ref, 'refs/tags/')
     steps:
     - name: Download all build artifacts
       uses: actions/download-artifact@v4
       with:
-        path: artifacts # Download all artifacts into an "artifacts" directory
+        path: artifacts
 
     - name: Create GitHub Release
       id: create_release
@@ -122,14 +103,28 @@ jobs:
         tag_name: ${{ github.ref_name }}
         release_name: Tako Release ${{ github.ref_name }}
         draft: false
-        prerelease: true # Mark as pre-release
+        prerelease: true
 
+    # --- THIS STEP IS THE FIX ---
     - name: Upload all release assets
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GH_REPO: ${{ github.repository }}
       run: |
-        # Use the GitHub CLI to upload all binaries from the downloaded artifact directories.
-        # This is robust and automatically handles any changes to the build matrix.
-        # The glob pattern finds all files inside the artifact subdirectories (e.g., artifacts/tako-linux-x86_64/tako)
-        gh release upload ${{ github.ref_name }} artifacts/**/* --clobber
+        # Loop through each artifact directory downloaded in the previous step
+        for dir in artifacts/*; do
+          # Get the name of the directory (e.g., "tako-linux-x86_64")
+          asset_base_name=$(basename "$dir")
+          # Find the binary file inside the directory
+          file_path=$(find "$dir" -type f)
+          
+          # Construct the final asset name. For Windows, append ".exe"
+          if [[ "$file_path" == *.exe ]]; then
+            asset_name="${asset_base_name}.exe"
+          else
+            asset_name="${asset_base_name}"
+          fi
+          
+          echo "Uploading '$file_path' as asset '$asset_name'..."
+          gh release upload ${{ github.ref_name }} "$file_path" --name "$asset_name" --clobber
+        done
