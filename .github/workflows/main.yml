@@ -15,40 +15,122 @@ jobs:
     strategy:
       matrix:
         include:
+          # Linux builds
           - os: ubuntu-latest
-            target: linux
-            output: tako
+            target: linux-x86_64
+            arch: x86_64
+            cc: gcc
+          - os: ubuntu-latest
+            target: linux-arm64
+            arch: aarch64
+            cc: aarch64-linux-gnu-gcc
+          
+          # Windows builds
+          - os: windows-latest
+            target: windows-x86_64
+            arch: x86_64
             cc: gcc
           - os: windows-latest
-            target: windows
-            output: tako.exe
+            target: windows-arm64
+            arch: arm64
             cc: gcc
-          - os: macos-latest
-            target: macos
-            output: tako
+          
+          # macOS builds
+          - os: macos-13  # Intel runner
+            target: macos-x86_64
+            arch: x86_64
+            cc: gcc
+          - os: macos-latest  # ARM64 runner
+            target: macos-arm64
+            arch: arm64
             cc: gcc
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup GCC (Windows)
-      if: matrix.os == 'windows-latest'
+    - name: Setup cross-compilation (Linux ARM64)
+      if: matrix.target == 'linux-arm64'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Setup GCC (Windows x86_64)
+      if: matrix.target == 'windows-x86_64'
       uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
         install: mingw-w64-x86_64-gcc
 
-    - name: Build (Linux/macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Setup GCC (Windows ARM64)
+      if: matrix.target == 'windows-arm64'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: CLANGARM64
+        install: mingw-w64-clang-aarch64-gcc
+
+    - name: Build (Linux x86_64)
+      if: matrix.target == 'linux-x86_64'
       run: |
-        ${{ matrix.cc }} tako.c -o ${{ matrix.output }}
-        
-    - name: Build (Windows)
-      if: matrix.os == 'windows-latest'
+        make clean
+        make
+
+    - name: Build (Linux ARM64)
+      if: matrix.target == 'linux-arm64'
+      run: |
+        make clean
+        CC=aarch64-linux-gnu-gcc make
+
+    - name: Build (Windows x86_64)
+      if: matrix.target == 'windows-x86_64'
       shell: msys2 {0}
       run: |
-        gcc tako.c -o ${{ matrix.output }}
+        make clean
+        make
+
+    - name: Build (Windows ARM64)
+      if: matrix.target == 'windows-arm64'
+      shell: msys2 {0}
+      run: |
+        make clean
+        CC=gcc make
+
+    - name: Build (macOS x86_64)
+      if: matrix.target == 'macos-x86_64'
+      run: |
+        make clean
+        make
+
+    - name: Build (macOS ARM64)
+      if: matrix.target == 'macos-arm64'
+      run: |
+        make clean
+        make
+
+    - name: Test executable (Linux)
+      if: startsWith(matrix.target, 'linux-') && matrix.arch == 'x86_64'
+      run: |
+        echo "Testing tako executable..."
+        ./tako
+        echo "Testing tako with example file..."
+        ./tako exam/hello.tako
+
+    - name: Test executable (Windows x86_64)
+      if: matrix.target == 'windows-x86_64'
+      shell: msys2 {0}
+      run: |
+        echo "Testing tako.exe executable..."
+        ./tako.exe
+        echo "Testing tako.exe with example file..."
+        ./tako.exe exam/hello.tako
+
+    - name: Test executable (macOS)
+      if: startsWith(matrix.target, 'macos-')
+      run: |
+        echo "Testing tako executable..."
+        ./tako
+        echo "Testing tako with example file..."
+        ./tako exam/hello.tako
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -74,32 +156,62 @@ jobs:
         draft: false
         prerelease: true
 
-    - name: Upload Linux Binary
+    - name: Upload Linux x86_64 Binary
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./tako-linux/tako
-        asset_name: tako-linux
+        asset_path: ./tako-linux-x86_64/tako
+        asset_name: tako-linux-x86_64
         asset_content_type: application/octet-stream
 
-    - name: Upload Windows Binary
+    - name: Upload Linux ARM64 Binary
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./tako-windows/tako.exe
-        asset_name: tako-windows.exe
+        asset_path: ./tako-linux-arm64/tako
+        asset_name: tako-linux-arm64
         asset_content_type: application/octet-stream
 
-    - name: Upload macOS Binary
+    - name: Upload Windows x86_64 Binary
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./tako-macos/tako
-        asset_name: tako-macos
+        asset_path: ./tako-windows-x86_64/tako.exe
+        asset_name: tako-windows-x86_64.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Windows ARM64 Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./tako-windows-arm64/tako.exe
+        asset_name: tako-windows-arm64.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload macOS x86_64 Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./tako-macos-x86_64/tako
+        asset_name: tako-macos-x86_64
+        asset_content_type: application/octet-stream
+
+    - name: Upload macOS ARM64 Binary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./tako-macos-arm64/tako
+        asset_name: tako-macos-arm64
         asset_content_type: application/octet-stream
